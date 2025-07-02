@@ -1,33 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Modern Chat UI
+
+A modern, responsive chat application built with Next.js, TypeScript, and shadcn/ui components.
+
+## Features
+
+- 🎨 **Modern UI Design** - Clean, responsive interface with shadcn/ui components
+- 💬 **Real-time Streaming** - Messages stream in real-time from the `/chat` API endpoint
+- 📝 **Markdown Support** - Full markdown rendering with syntax highlighting
+- 🌙 **Dark Mode** - Automatic dark/light mode support
+- 📱 **Mobile Responsive** - Works perfectly on all device sizes
+- ⚡ **Fast Performance** - Built with Next.js 15 and optimized for speed
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Markdown**: react-markdown with remark-gfm
+- **Icons**: Lucide React
 
 ## Getting Started
 
-First, run the development server:
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Open your browser** and navigate to [http://localhost:3000](http://localhost:3000)
+
+## API Integration
+
+The chat interface connects to the `/chat` API endpoint. The current implementation includes a demo response that shows streaming functionality. To integrate with a real AI service:
+
+1. Replace the demo logic in `src/app/chat/route.ts`
+2. Add your AI service API calls
+3. Ensure the response is streamed for real-time updates
+
+### Example API Integration
+
+```typescript
+// src/app/chat/route.ts
+export async function POST(request: NextRequest) {
+  const { message } = await request.json();
+  
+  // Replace with your AI service
+  const response = await fetch('YOUR_AI_API_ENDPOINT', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${process.env.AI_API_KEY}` },
+    body: JSON.stringify({ message })
+  });
+  
+  return new Response(response.body, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  });
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+├── app/
+│   ├── chat/
+│   │   └── route.ts          # Chat API endpoint
+│   ├── globals.css           # Global styles
+│   ├── layout.tsx            # Root layout
+│   └── page.tsx              # Home page
+├── components/
+│   ├── ui/                   # shadcn/ui components
+│   └── chat-interface.tsx    # Main chat component
+└── lib/
+    └── utils.ts              # Utility functions
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Customization
 
-## Learn More
+### Styling
+- Modify `src/app/globals.css` for global styles
+- Update component styles in `src/components/chat-interface.tsx`
+- Customize shadcn/ui theme in `tailwind.config.ts`
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Features
+- Add user authentication
+- Implement message persistence
+- Add file upload support
+- Integrate with different AI providers
 
 ## Deploy on Vercel
 
