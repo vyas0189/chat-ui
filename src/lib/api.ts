@@ -10,7 +10,7 @@ export interface StreamingChatResponse {
 }
 
 export async function* streamChatResponse(request: StreamingChatRequest) {
-  const response = await fetch('/query', {
+  const response = await fetch('http://localhost:8000/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
