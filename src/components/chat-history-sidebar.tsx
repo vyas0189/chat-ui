@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useChatHistory } from '@/contexts/ChatHistoryContext';
+import { useChatStore } from '@/stores/chatStore';
 import { Plus, MessageSquare, Trash2, Edit3, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -18,7 +18,7 @@ export default function ChatHistorySidebar({ isOpen, onToggle }: ChatHistorySide
     selectChat, 
     deleteChat, 
     updateChatTitle 
-  } = useChatHistory();
+  } = useChatStore();
   
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');

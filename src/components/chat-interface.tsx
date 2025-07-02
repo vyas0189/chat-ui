@@ -5,23 +5,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Send, Bot, User, Sun, Moon, Menu } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useChatHistory, type Message } from "@/contexts/ChatHistoryContext";
+import { useThemeStore } from "@/stores/themeStore";
+import { useChatStore, type Message } from "@/stores/chatStore";
 import ChatHistorySidebar from "./chat-history-sidebar";
+import { useStreamingChat } from "@/lib/api";
 
 export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
   const { 
     currentChat, 
     currentChatId, 
     createNewChat, 
     updateChatMessages 
-  } = useChatHistory();
+  } = useChatStore();
+  const { streamChat } = useStreamingChat();
 
   const messages = currentChat?.messages || [];
 
@@ -56,22 +59,32 @@ export default function ChatInterface() {
     updateChatMessages(chatId, newMessages);
     setInput("");
     setIsLoading(true);
+    setStreamingMessage("");
 
     try {
-      // Simulate API response for demo purposes
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let accumulatedContent = "";
       
+      await streamChat(
+        { message: inputValue, chatId },
+        (chunk) => {
+          accumulatedContent += chunk.content;
+          setStreamingMessage(accumulatedContent);
+        }
+      );
+
+      // Create final assistant message
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Thanks for your message: "${inputValue}". This is a demo response. In a real application, this would connect to an AI service.`,
+        content: accumulatedContent,
         role: "assistant",
         timestamp: new Date(),
       };
 
       const finalMessages = [...newMessages, assistantMessage];
       updateChatMessages(chatId, finalMessages);
-    } catch {
-      // Handle error silently in production
+      setStreamingMessage("");
+    } catch (error) {
+      console.error("Streaming error:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "Sorry, I encountered an error. Please try again.",
@@ -80,6 +93,7 @@ export default function ChatInterface() {
       };
       const finalMessages = [...newMessages, errorMessage];
       updateChatMessages(chatId, finalMessages);
+      setStreamingMessage("");
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +197,7 @@ export default function ChatInterface() {
               </div>
             ))}
             
-            {isLoading && (
+            {(isLoading || streamingMessage) && (
               <div className="group w-full border-b border-border bg-muted/30">
                 <div className="flex gap-4 p-6 max-w-3xl mx-auto">
                   <div className="flex-shrink-0">
@@ -191,12 +205,38 @@ export default function ChatInterface() {
                       <Bot className="w-5 h-5 text-white" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                      <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    {streamingMessage ? (
+                      <div className="prose prose-gray dark:prose-invert max-w-none">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <p className="mb-3 last:mb-0 text-foreground">{children}</p>,
+                            code: ({ children, className }) => {
+                              const isInline = !className;
+                              return isInline ? (
+                                <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground">
+                                  {children}
+                                </code>
+                              ) : (
+                                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                                  <code className="text-sm font-mono text-foreground">{children}</code>
+                                </pre>
+                              );
+                            },
+                          }}
+                        >
+                          {streamingMessage}
+                        </ReactMarkdown>
+                        <div className="inline-block w-2 h-4 bg-foreground animate-pulse ml-1"></div>
+                      </div>
+                    ) : (
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
